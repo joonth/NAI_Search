@@ -1,10 +1,8 @@
 package com.hk.web.dtos;
 
 import org.jsoup.select.Elements;
-import org.springframework.stereotype.Component;
 
-@Component
-public class Dto {
+public class ListDto {
 	private String img;
 	private String title;
 	private Elements subTitle;
@@ -34,9 +32,7 @@ public class Dto {
 	public void setAddress(Elements address) {
 		this.address = address;
 	}
-	@Override
-	public String toString() {
-		return "Dto [img=" + img + ", title=" + title + ", subTitle=" + subTitle + ", address=" + address + "]";
-	}
+	
+	
 	
 }

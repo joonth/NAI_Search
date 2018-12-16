@@ -1,4 +1,6 @@
-function myFunction(val) {
+
+	
+	function myFunction(val) {
 
 	  var input, filter, table, tr, td, i, txtValue;
 	  input = document.getElementById("myInput");
