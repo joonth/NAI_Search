@@ -4,7 +4,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Dto {
+public class SearchDto {
 	private String img;
 	private String title;
 	private Elements subTitle;

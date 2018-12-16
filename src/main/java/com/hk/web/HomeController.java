@@ -14,7 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.hk.web.dtos.Dto;
+import com.hk.web.dtos.SearchDto;
 
 
 @Controller
@@ -27,7 +27,7 @@ public class HomeController {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) throws IOException {
 		logger.info("학원리스트 출력",locale);
-		List<Dto> list = new ArrayList<>();
+		List<SearchDto> list = new ArrayList<>();
 		int count = 0;
 		org.jsoup.nodes.Document doc=
 		Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt=20181211&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
@@ -53,7 +53,7 @@ public class HomeController {
 					|| title.contains("프로그래밍")
 					|| title.contains("보안"))
 			 {
-				 Dto dto =  new Dto();
+				 SearchDto dto =  new SearchDto();
 				 ////////////////////////////////// 사진요청
 				  org.jsoup.nodes.Document doc1=
 					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+datas.get(i).select("trprId").toString().substring(9, 28).trim()+"&srchTrprDegr=1")
