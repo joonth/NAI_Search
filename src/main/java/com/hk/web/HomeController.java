@@ -15,7 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.hk.web.daos.SearchDao;
+ 
 import com.hk.web.dtos.SearchDto;
 import com.hk.web.services.SearchService;
 
@@ -91,5 +91,10 @@ public class HomeController {
 		System.out.println("전체 리스트 출력에 걸린시간(s) : " + (endTime - initTime)/1000000000);
 		model.addAttribute("list", list);	
 		return "home";
+	}
+	
+	@RequestMapping(value = "/info", method = RequestMethod.GET)
+	public String info(Locale locale, Model model) throws IOException {
+		return "info";
 	}
 }

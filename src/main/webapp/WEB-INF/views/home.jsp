@@ -21,7 +21,7 @@
 					<th style="width:5%;">평점</th>
 				</tr>
 				<c:forEach var = "dto" items="${list}">
-					<tr>
+					<tr onclick="window.location='info?subTitle=${dto.subTitle}'">
 						<c:choose>
 							 <c:when test="${dto.img=='a'}">
 								<td>
