@@ -8,17 +8,23 @@ import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.hk.web.daos.SearchDao;
 import com.hk.web.dtos.SearchDto;
+import com.hk.web.services.SearchService;
 
 
 @Controller
 public class HomeController {
+	
+	@Autowired
+	SearchService service;
 	
 	@Value("#{apiKey['key']}")
 	private String key;
@@ -27,6 +33,7 @@ public class HomeController {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) throws IOException {
 		logger.info("학원리스트 출력",locale);
+		long initTime = System.nanoTime();
 		List<SearchDto> list = new ArrayList<>();
 		int count = 0;
 		org.jsoup.nodes.Document doc=
@@ -35,7 +42,8 @@ public class HomeController {
 		Elements datas = doc.select("scn_list");
 		
 		for(int i = 0; i < datas.size(); i++){
-			String title = datas.get(i).select("title").toString();
+			String tmpTitle = datas.get(i).select("title").toString();
+			String title = tmpTitle.substring(tmpTitle.indexOf("<title>")+7, tmpTitle.indexOf("</title>")).trim();
 			 if(title.contains("자바")
 					|| title.contains("웹")
 					|| title.contains("앱")
@@ -54,6 +62,11 @@ public class HomeController {
 					|| title.contains("보안"))
 			 {
 				 SearchDto dto =  new SearchDto();
+				 String tmpsubTitle = datas.get(i).select("subTitle").toString();
+				 String tmpAddress = datas.get(i).select("address").toString();
+				 String subTitle = tmpsubTitle.substring(tmpsubTitle.indexOf("<subtitle>")+10, tmpsubTitle.indexOf("</subtitle>")).trim();
+				 String address = tmpAddress.substring(tmpAddress.indexOf("<address>")+9, tmpAddress.indexOf("</address>")).trim();
+				 
 				 ////////////////////////////////// 사진요청
 				  org.jsoup.nodes.Document doc1=
 					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+datas.get(i).select("trprId").toString().substring(9, 28).trim()+"&srchTrprDegr=1")
@@ -65,14 +78,17 @@ public class HomeController {
 				  }else{
 					dto.setImg("a");		
 				  }  
-				  dto.setTitle(title.substring(7));
-				  dto.setSubTitle(datas.get(i).select("subTitle"));
-				  dto.setAddress(datas.get(i).select("address"));
+				  dto.setTitle(title);
+				  dto.setSubTitle(subTitle);
+				  dto.setAddress(address);
+				  dto.setScore(service.getScore(subTitle));
 				  count++;
 				  list.add(dto);
 			}
 		}//for
+		long endTime = System.nanoTime();
 		System.out.println("출력 과정수 : "+count);
+		System.out.println("전체 리스트 출력에 걸린시간(s) : " + (endTime - initTime)/1000000000);
 		model.addAttribute("list", list);	
 		return "home";
 	}

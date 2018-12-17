@@ -7,9 +7,16 @@ import org.springframework.stereotype.Component;
 public class SearchDto {
 	private String img;
 	private String title;
-	private Elements subTitle;
-	private Elements address;
+	private String subTitle;
+	private String address;
+	private Float score;
 	
+	public Float getScore() {
+		return score;
+	}
+	public void setScore(Float score) {
+		this.score = score;
+	}
 	public String getImg() {
 		return img;
 	}
@@ -22,21 +29,23 @@ public class SearchDto {
 	public void setTitle(String title) {
 		this.title = title;
 	}
-	public Elements getSubTitle() {
+	public String getSubTitle() {
 		return subTitle;
 	}
-	public void setSubTitle(Elements subTitle) {
+	public void setSubTitle(String subTitle) {
 		this.subTitle = subTitle;
 	}
-	public Elements getAddress() {
+	public String getAddress() {
 		return address;
 	}
-	public void setAddress(Elements address) {
+	public void setAddress(String address) {
 		this.address = address;
 	}
 	@Override
 	public String toString() {
-		return "Dto [img=" + img + ", title=" + title + ", subTitle=" + subTitle + ", address=" + address + "]";
+		return "SearchDto [img=" + img + ", title=" + title + ", subTitle=" + subTitle + ", address=" + address
+				+ ", score=" + score + "]";
 	}
+
 	
 }

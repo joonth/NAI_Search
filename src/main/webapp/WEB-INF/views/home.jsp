@@ -17,7 +17,8 @@
 					<th style="width:20%;">사진</th>
 					<th style="width:40%;">과정명</th>
 					<th style="width:25%;">학원명</th>
-					<th style="width:15%;">주소</th>
+					<th style="width:10%;">주소</th>
+					<th style="width:5%;">평점</th>
 				</tr>
 				<c:forEach var = "dto" items="${list}">
 					<tr>
@@ -36,6 +37,7 @@
 						<td>${dto.title}</td>
 						<td>${dto.subTitle}</td>
 						<td>${dto.address}</td>
+						<td>${dto.score}</td>
 					</tr>
 				</c:forEach>
 			</table>

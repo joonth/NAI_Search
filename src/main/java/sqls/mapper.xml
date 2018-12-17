@@ -5,5 +5,8 @@
   
   <mapper namespace="com.hk.web">
   	
+  	<select id="getScore" parameterType="String" resultType="Integer">
+  		SELECT ac_score FROM ac_comment WHERE ac_name = #{subTitle}
+  	</select>
   
   </mapper>
