@@ -5,7 +5,7 @@
   
   <configuration>
   	<typeAliases>
-  		<typeAlias type="com.hk.web.dtos.SearchDto" alias="dto"/>
+  		<typeAlias type="com.hk.web.dtos.commentDto" alias="dto"/>
   	</typeAliases>
   
   	<mappers>

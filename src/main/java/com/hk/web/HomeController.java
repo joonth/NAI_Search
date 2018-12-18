@@ -2,8 +2,11 @@ package com.hk.web;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
@@ -15,16 +18,27 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
- 
+import com.hk.web.daos.CommentDao;
+import com.hk.web.dtos.InfoDto;
 import com.hk.web.dtos.SearchDto;
+import com.hk.web.dtos.commentDto;
+import com.hk.web.services.InfoService;
 import com.hk.web.services.SearchService;
 
 
 @Controller
 public class HomeController {
 	
+	Map<String,SearchDto> titleIdMapper = new HashMap<>();
+	
 	@Autowired
-	SearchService service;
+	CommentDao commentDao;
+	@Autowired
+	InfoDto infoDto;
+	@Autowired
+	SearchService Sserv;
+	@Autowired
+	InfoService Iserv;
 	
 	@Value("#{apiKey['key']}")
 	private String key;
@@ -66,10 +80,12 @@ public class HomeController {
 				 String tmpAddress = datas.get(i).select("address").toString();
 				 String subTitle = tmpsubTitle.substring(tmpsubTitle.indexOf("<subtitle>")+10, tmpsubTitle.indexOf("</subtitle>")).trim();
 				 String address = tmpAddress.substring(tmpAddress.indexOf("<address>")+9, tmpAddress.indexOf("</address>")).trim();
+				 String trprId =datas.get(i).select("trprId").toString().substring(9, 28).trim();
+				 
 				 
 				 ////////////////////////////////// 사진요청
 				  org.jsoup.nodes.Document doc1=
-					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+datas.get(i).select("trprId").toString().substring(9, 28).trim()+"&srchTrprDegr=1")
+					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+trprId+"&srchTrprDegr=1")
 					.timeout(80000).maxBodySize(10*1024*1024).get();
 				 ///////////////////////////////////	 
 		 		 
@@ -81,8 +97,10 @@ public class HomeController {
 				  dto.setTitle(title);
 				  dto.setSubTitle(subTitle);
 				  dto.setAddress(address);
-				  dto.setScore(service.getScore(subTitle));
+				  dto.setScore(Sserv.getScore(subTitle));
+				  dto.setTrprId(trprId);
 				  count++;
+				  titleIdMapper.put(subTitle, dto);
 				  list.add(dto);
 			}
 		}//for
@@ -94,7 +112,64 @@ public class HomeController {
 	}
 	
 	@RequestMapping(value = "/info", method = RequestMethod.GET)
-	public String info(Locale locale, Model model) throws IOException {
+	public String info(Locale locale, Model model, String subTitle) throws IOException {
+		
+		 org.jsoup.nodes.Document docInfo=
+					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+titleIdMapper.get(subTitle).getTrprId()+"&srchTrprDegr=1")
+					.timeout(80000).maxBodySize(10*1024*1024).get();
+		
+		 
+		infoDto.setImg(titleIdMapper.get(subTitle).getImg());
+		infoDto.setAddr1(docInfo.select("addr1").toString());
+		infoDto.setAddr2(docInfo.select("addr2").toString());
+		infoDto.setHpaddr(docInfo.select("hpAddr").toString());
+		infoDto.setInonm(docInfo.select("inoNm").toString());
+		infoDto.setTrprchaptel(docInfo.select("trprChapTel").toString());
+		infoDto.setTrprnm(docInfo.select("trprNm").toString());
+		model.addAttribute("infoDto", infoDto);
+		
+		List<commentDto> commentList = new ArrayList<>();
+		commentList = Iserv.getComment(subTitle);
+		if(!(commentList.size()==0)) {
+			model.addAttribute("list", commentList);
+		}else {
+			model.addAttribute("list", null);
+		}
+		
 		return "info";
 	}
+	//CommentDao
+	
+	@RequestMapping(value = "/addComment", method = RequestMethod.GET)
+	public String addComment(Locale locale, Model model,commentDto dto) throws IOException {
+		
+		String tmpAc_name = dto.getAc_name();
+		String ac_name = tmpAc_name.substring(tmpAc_name.indexOf("<inonm>")+8, tmpAc_name.indexOf("</inonm>")).trim();
+		dto.setAc_name(ac_name);
+		org.jsoup.nodes.Document docInfo=
+					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+titleIdMapper.get(ac_name).getTrprId()+"&srchTrprDegr=1")
+					.timeout(80000).maxBodySize(10*1024*1024).get();
+		
+		 
+		infoDto.setImg(titleIdMapper.get(ac_name).getImg());
+		infoDto.setAddr1(docInfo.select("addr1").toString());
+		infoDto.setAddr2(docInfo.select("addr2").toString());
+		infoDto.setHpaddr(docInfo.select("hpAddr").toString());
+		infoDto.setInonm(docInfo.select("inoNm").toString());
+		infoDto.setTrprchaptel(docInfo.select("trprChapTel").toString());
+		infoDto.setTrprnm(docInfo.select("trprNm").toString());
+		model.addAttribute("infoDto", infoDto);
+	
+		
+		commentDao.addComment(dto);
+		List<commentDto> commentList = new ArrayList<>();
+		commentList = Iserv.getComment(ac_name);
+		if(!(commentList.size()==0)) {
+			model.addAttribute("list", commentList);
+		}else {
+			model.addAttribute("list", null);
+		}
+		return "info";
+	}
+	
 }

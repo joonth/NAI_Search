@@ -1,5 +1,6 @@
 package com.hk.web.services;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,4 +28,5 @@ public class SearchService {
 			return (float) (Math.round((answer/list.size())*100)/100.0);
 		}
 	}
+
 }

@@ -1,15 +1,24 @@
 package com.hk.web.dtos;
 
-import org.jsoup.select.Elements;
+import java.io.Serializable;
+
 import org.springframework.stereotype.Component;
 
 @Component
-public class SearchDto {
+public class SearchDto implements Serializable {
 	private String img;
 	private String title;
 	private String subTitle;
 	private String address;
 	private Float score;
+	
+	public String getTrprId() {
+		return trprId;
+	}
+	public void setTrprId(String trprId) {
+		this.trprId = trprId;
+	}
+	private String trprId;
 	
 	public Float getScore() {
 		return score;
@@ -41,11 +50,14 @@ public class SearchDto {
 	public void setAddress(String address) {
 		this.address = address;
 	}
+	
 	@Override
 	public String toString() {
 		return "SearchDto [img=" + img + ", title=" + title + ", subTitle=" + subTitle + ", address=" + address
-				+ ", score=" + score + "]";
+				+ ", score=" + score + ", trprId=" + trprId + "]";
 	}
+	
+	
 
 	
 }

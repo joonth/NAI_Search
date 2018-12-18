@@ -8,5 +8,13 @@
   	<select id="getScore" parameterType="String" resultType="Integer">
   		SELECT ac_score FROM ac_comment WHERE ac_name = #{subTitle}
   	</select>
-  
+  	
+  	<select id="getComment" parameterType="String" resultType="dto">
+  		SELECT ac_name,ac_comment,ac_score,m_id FROM ac_comment WHERE ac_name = #{subTitle}
+  	</select>
+  	
+  	<insert id="addComment" parameterType="dto">
+  		insert into ac_comment values(#{ac_name},#{ac_comment},#{ac_score},#{m_id})
+  	</insert>
+  	
   </mapper>
