@@ -4,6 +4,12 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 	<head>
+	<script type="text/javascript">
+		history.pushState(null, null, location.href); 
+		window.onpopstate = function(event) { 
+			location.href="main";
+		}
+	</script>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<style type="text/css">
 			.table { display:table; }
@@ -55,6 +61,7 @@
 				<option value="0.0">0.0</option>
 			</select>
 			<input type="submit" value="글작성">
+			<input type="button" value="뒤로가기" onclick="location.href='main'">
 		</form>
 	</div>
 </body>

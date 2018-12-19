@@ -1,7 +1,9 @@
 package com.hk.web;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,14 +46,19 @@ public class HomeController {
 	private String key;
 	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 	
-	@RequestMapping(value = "/", method = RequestMethod.GET)
+	@RequestMapping(value = "/main", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) throws IOException {
-		logger.info("학원리스트 출력",locale);
 		long initTime = System.nanoTime();
+		logger.info("학원리스트 출력",locale);
+
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+	    Calendar c1 = Calendar.getInstance();
+	    String strToday = sdf.format(c1.getTime());
+		
 		List<SearchDto> list = new ArrayList<>();
 		int count = 0;
 		org.jsoup.nodes.Document doc=
-		Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt=20181211&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
+		Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt="+strToday+"&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
 		.timeout(60000).maxBodySize(10*1024*1024).get();
 		Elements datas = doc.select("scn_list");
 		
@@ -83,7 +90,7 @@ public class HomeController {
 				 String trprId =datas.get(i).select("trprId").toString().substring(9, 28).trim();
 				 
 				 
-				 ////////////////////////////////// 사진요청
+				/* ////////////////////////////////// 사진요청
 				  org.jsoup.nodes.Document doc1=
 					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+trprId+"&srchTrprDegr=1")
 					.timeout(80000).maxBodySize(10*1024*1024).get();
@@ -93,7 +100,7 @@ public class HomeController {
 					dto.setImg(doc1.select("filePath").toString().substring(10, 94).trim());
 				  }else{
 					dto.setImg("a");		
-				  }  
+				  }  */
 				  dto.setTitle(title);
 				  dto.setSubTitle(subTitle);
 				  dto.setAddress(address);

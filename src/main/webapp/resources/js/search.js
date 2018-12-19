@@ -29,7 +29,7 @@ function myFunction(val) {
       }
     }
   }
-  if(val === ""){	//검색창에 문자가 없을경우 리스트 출력하지 않음.
+ /* if(val === ""){	//검색창에 문자가 없을경우 리스트 출력하지 않음.
 	  document.getElementById("none").style.display="";
-  }
+  }*/
 }
