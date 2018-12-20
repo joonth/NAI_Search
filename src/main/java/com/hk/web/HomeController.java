@@ -15,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hk.web.daos.CommentDao;
 import com.hk.web.dtos.InfoDto;
@@ -37,6 +39,7 @@ public class HomeController {
 	CommentDao commentDao;
 	@Autowired
 	InfoDto infoDto;
+	
 	@Autowired
 	SearchService Sserv;
 	@Autowired
@@ -82,7 +85,7 @@ public class HomeController {
 					|| title.contains("프로그래밍")
 					|| title.contains("보안"))
 			 {
-				 SearchDto dto =  new SearchDto();
+				
 				 String tmpsubTitle = datas.get(i).select("subTitle").toString();
 				 String tmpAddress = datas.get(i).select("address").toString();
 				 String subTitle = tmpsubTitle.substring(tmpsubTitle.indexOf("<subtitle>")+10, tmpsubTitle.indexOf("</subtitle>")).trim();
@@ -101,19 +104,25 @@ public class HomeController {
 				  }else{
 					dto.setImg("a");		
 				  }  */
-				  dto.setTitle(title);
-				  dto.setSubTitle(subTitle);
-				  dto.setAddress(address);
-				  dto.setScore(Sserv.getScore(subTitle));
-				  dto.setTrprId(trprId);
+				 SearchDto searchDto = new SearchDto();
+				 searchDto.setTitle(title);
+				 searchDto.setSubTitle(subTitle);
+				 searchDto.setAddress(address);
+				 searchDto.setScore(Sserv.getScore(subTitle));
+				 searchDto.setTrprId(trprId);
 				  count++;
-				  titleIdMapper.put(subTitle, dto);
-				  list.add(dto);
+				  
+				  titleIdMapper.put(subTitle, searchDto);
+				  list.add(searchDto);
 			}
 		}//for
 		long endTime = System.nanoTime();
 		System.out.println("출력 과정수 : "+count);
 		System.out.println("전체 리스트 출력에 걸린시간(s) : " + (endTime - initTime)/1000000000);
+		//img 호출 api를 jsp에서 하기위한 값전달
+		model.addAttribute("key", key);
+		model.addAttribute("map", titleIdMapper);
+		//
 		model.addAttribute("list", list);	
 		return "home";
 	}
@@ -124,7 +133,6 @@ public class HomeController {
 		 org.jsoup.nodes.Document docInfo=
 					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+titleIdMapper.get(subTitle).getTrprId()+"&srchTrprDegr=1")
 					.timeout(80000).maxBodySize(10*1024*1024).get();
-		
 		 
 		infoDto.setImg(titleIdMapper.get(subTitle).getImg());
 		infoDto.setAddr1(docInfo.select("addr1").toString());
@@ -177,6 +185,27 @@ public class HomeController {
 			model.addAttribute("list", null);
 		}
 		return "info";
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping(value = "/getImg", method = RequestMethod.GET)
+	public Map<String, SearchDto> getImg(Locale locale, Model model,String text) throws IOException {
+		List<String> imgList = new ArrayList<>();
+		Map<String,SearchDto> map = new HashMap<>();
+		 SearchDto searchDto = new SearchDto();
+
+		searchDto = titleIdMapper.get(text);
+		org.jsoup.nodes.Document docImg=
+				Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+searchDto.getTrprId()+"&srchTrprDegr=1")
+				.timeout(80000).maxBodySize(10*1024*1024).get();
+		if(!docImg.select("filePath").toString().equals("")){
+			searchDto.setImg(docImg.select("filePath").toString().substring(10, 94).trim());
+		  }else{
+			  searchDto.setImg("a");
+		  }  
+		map.put(text, searchDto);
+		return map;
 	}
 	
 }
