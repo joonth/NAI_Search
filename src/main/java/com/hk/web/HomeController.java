@@ -33,6 +33,7 @@ import com.hk.web.services.SearchService;
 @Controller
 public class HomeController {
 	
+
 	Map<String,SearchDto> titleIdMapper = new HashMap<>();
 	
 	@Autowired
@@ -45,21 +46,24 @@ public class HomeController {
 	@Autowired
 	InfoService Iserv;
 	
+	
 	@Value("#{apiKey['key']}")
 	private String key;
 	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+	int count = 0;
 	
 	@RequestMapping(value = "/main", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) throws IOException {
 		long initTime = System.nanoTime();
+	
+		
 		logger.info("학원리스트 출력",locale);
-
+		
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 	    Calendar c1 = Calendar.getInstance();
 	    String strToday = sdf.format(c1.getTime());
 		
 		List<SearchDto> list = new ArrayList<>();
-		int count = 0;
 		org.jsoup.nodes.Document doc=
 		Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt="+strToday+"&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
 		.timeout(60000).maxBodySize(10*1024*1024).get();
@@ -92,25 +96,16 @@ public class HomeController {
 				 String address = tmpAddress.substring(tmpAddress.indexOf("<address>")+9, tmpAddress.indexOf("</address>")).trim();
 				 String trprId =datas.get(i).select("trprId").toString().substring(9, 28).trim();
 				 
-				 
-				/* ////////////////////////////////// 사진요청
-				  org.jsoup.nodes.Document doc1=
-					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+trprId+"&srchTrprDegr=1")
-					.timeout(80000).maxBodySize(10*1024*1024).get();
-				 ///////////////////////////////////	 
-		 		 
-				  if(!doc1.select("filePath").toString().equals("")){
-					dto.setImg(doc1.select("filePath").toString().substring(10, 94).trim());
-				  }else{
-					dto.setImg("a");		
-				  }  */
 				 SearchDto searchDto = new SearchDto();
+				 /*if(count >0){
+					 searchDto.setImg(titleIdMapper.get(subTitle).getImg());					 
+				 }*/
 				 searchDto.setTitle(title);
 				 searchDto.setSubTitle(subTitle);
 				 searchDto.setAddress(address);
 				 searchDto.setScore(Sserv.getScore(subTitle));
 				 searchDto.setTrprId(trprId);
-				  count++;
+				
 				  
 				  titleIdMapper.put(subTitle, searchDto);
 				  list.add(searchDto);
@@ -120,6 +115,11 @@ public class HomeController {
 		System.out.println("출력 과정수 : "+count);
 		System.out.println("전체 리스트 출력에 걸린시간(s) : " + (endTime - initTime)/1000000000);
 		//img 호출 api를 jsp에서 하기위한 값전달
+		
+		count++;
+
+		
+		
 		model.addAttribute("key", key);
 		model.addAttribute("map", titleIdMapper);
 		//
@@ -189,22 +189,29 @@ public class HomeController {
 	
 	
 	@ResponseBody
-	@RequestMapping(value = "/getImg", method = RequestMethod.GET)
-	public Map<String, SearchDto> getImg(Locale locale, Model model,String text) throws IOException {
+	@RequestMapping(value = "/getImg", method = RequestMethod.POST)
+	public Map<String, SearchDto> getImg(Locale locale, Model model,String[] acTitle) throws IOException {
 		List<String> imgList = new ArrayList<>();
 		Map<String,SearchDto> map = new HashMap<>();
-		 SearchDto searchDto = new SearchDto();
+		 String text = "";
 
-		searchDto = titleIdMapper.get(text);
+		 for(int i=0; i<acTitle.length; i++) {
+			 text = acTitle[i];
+			
+			 SearchDto searchDto = new SearchDto();
+			 searchDto.setTrprId(titleIdMapper.get(text).getTrprId());
+
 		org.jsoup.nodes.Document docImg=
 				Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+searchDto.getTrprId()+"&srchTrprDegr=1")
 				.timeout(80000).maxBodySize(10*1024*1024).get();
 		if(!docImg.select("filePath").toString().equals("")){
 			searchDto.setImg(docImg.select("filePath").toString().substring(10, 94).trim());
+			titleIdMapper.put(text, searchDto);
 		  }else{
-			  searchDto.setImg("a");
-		  }  
+			  //searchDto.setImg("a");
+		  }
 		map.put(text, searchDto);
+		 }
 		return map;
 	}
 	
