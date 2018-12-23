@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,104 +27,87 @@ import com.hk.web.dtos.SearchDto;
 import com.hk.web.dtos.commentDto;
 import com.hk.web.services.InfoService;
 import com.hk.web.services.SearchService;
+import com.hk.web.utils.SearchUtil;
 
 
 @Controller
 public class HomeController {
 	
-
+	
 	Map<String,SearchDto> titleIdMapper = new HashMap<>();
 	
+	@Autowired		//api로 얻어온 xml data의 tag를 없애는 util.
+	SearchUtil util;
 	@Autowired
 	CommentDao commentDao;
 	@Autowired
 	InfoDto infoDto;
-	
 	@Autowired
 	SearchService Sserv;
 	@Autowired
 	InfoService Iserv;
-	
-	
-	@Value("#{apiKey['key']}")
+	@Value("#{apiKey['key']}")		//github에 apikey를 올리지 않기 위해서 key를 따로 저장후 받아옴.
 	private String key;
+	
+	
+	List<SearchDto> list = new ArrayList<>();
 	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
-	int count = 0;
+	int count = 0;		//출력되는 과정수를 나타내기 위한 변수.
 	
 	@RequestMapping(value = "/main", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) throws IOException {
-		long initTime = System.nanoTime();
-	
-		
-		logger.info("학원리스트 출력",locale);
-		
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-	    Calendar c1 = Calendar.getInstance();
-	    String strToday = sdf.format(c1.getTime());
-		
-		List<SearchDto> list = new ArrayList<>();
-		org.jsoup.nodes.Document doc=
-		Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt="+strToday+"&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
-		.timeout(60000).maxBodySize(10*1024*1024).get();
-		Elements datas = doc.select("scn_list");
-		
-		for(int i = 0; i < datas.size(); i++){
-			String tmpTitle = datas.get(i).select("title").toString();
-			String title = tmpTitle.substring(tmpTitle.indexOf("<title>")+7, tmpTitle.indexOf("</title>")).trim();
-			 if(title.contains("자바")
-					|| title.contains("웹")
-					|| title.contains("앱")
-					|| title.contains("빅데이터")
-					|| title.contains("개발자")
-					|| title.contains("Iot")
-					|| title.contains("ICT")
-					|| title.contains("파이썬")
-					|| title.contains("오라클")
-					|| title.contains("UI")
-					|| title.contains("UX")
-					|| title.contains("디지털컨버전스")
-					|| title.contains("오픈소스")
-					|| title.contains("사물인터넷")
-					|| title.contains("프로그래밍")
-					|| title.contains("보안"))
-			 {
-				
-				 String tmpsubTitle = datas.get(i).select("subTitle").toString();
-				 String tmpAddress = datas.get(i).select("address").toString();
-				 String subTitle = tmpsubTitle.substring(tmpsubTitle.indexOf("<subtitle>")+10, tmpsubTitle.indexOf("</subtitle>")).trim();
-				 String address = tmpAddress.substring(tmpAddress.indexOf("<address>")+9, tmpAddress.indexOf("</address>")).trim();
-				 String trprId =datas.get(i).select("trprId").toString().substring(9, 28).trim();
-				 
-				 SearchDto searchDto = new SearchDto();
-				 /*if(count >0){
-					 searchDto.setImg(titleIdMapper.get(subTitle).getImg());					 
-				 }*/
-				 searchDto.setTitle(title);
-				 searchDto.setSubTitle(subTitle);
-				 searchDto.setAddress(address);
-				 searchDto.setScore(Sserv.getScore(subTitle));
-				 searchDto.setTrprId(trprId);
-				
-				  
-				  titleIdMapper.put(subTitle, searchDto);
-				  list.add(searchDto);
-			}
-		}//for
-		long endTime = System.nanoTime();
-		System.out.println("출력 과정수 : "+count);
-		System.out.println("전체 리스트 출력에 걸린시간(s) : " + (endTime - initTime)/1000000000);
-		//img 호출 api를 jsp에서 하기위한 값전달
-		
-		count++;
-
-		
-		
+		if(list.size() ==0) {		// 과정정보 list를 구하는 for문을 한번만 돌리기 위한 if문.		
+			logger.info("학원리스트 출력",locale);
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");	
+		    Calendar c1 = Calendar.getInstance();
+		    String strToday = sdf.format(c1.getTime());
+			
+			org.jsoup.nodes.Document doc=
+			Jsoup.connect("http://www.hrd.go.kr/hrdp/api/apieo/APIEO0101T.do?srchTraEndDt=20191231&pageSize=1500&srchTraStDt="+strToday+"&sortCol=TOT_FXNUM&authKey="+key+"&sort=ASC&returnType=XML&outType=1&pageNum=1&srchTraPattern=2&srchPart=-99&apiRequstPageUrlAdres=/jsp/HRDP/HRDPO00/HRDPOA11/HRDPOA11_1.jsp&apiRequstIp=112.221.224.124")
+			.timeout(60000).maxBodySize(10*1024*1024).get();
+			Elements datas = doc.select("scn_list");
+			
+			for(int i = 0; i < datas.size(); i++){
+				String title = util.tagTrim(datas.get(i).select("title"), "title");
+				if(title.contains("자바")
+						|| title.contains("웹")
+						|| title.contains("앱")
+						|| title.contains("빅데이터")
+						|| title.contains("개발자")
+						|| title.contains("Iot")
+						|| title.contains("ICT")
+						|| title.contains("파이썬")
+						|| title.contains("오라클")
+						|| title.contains("UI")
+						|| title.contains("UX")
+						|| title.contains("디지털컨버전스")
+						|| title.contains("오픈소스")
+						|| title.contains("사물인터넷")
+						|| title.contains("프로그래밍")
+						|| title.contains("보안"))
+				 {		 
+					 SearchDto searchDto = new SearchDto();
+					 searchDto.setTitle(title);
+					 searchDto.setSubTitle(util.tagTrim(datas.get(i).select("subtitle"), "subtitle"));
+					 searchDto.setAddress(util.tagTrim(datas.get(i).select("address"), "address"));
+					 searchDto.setScore(Sserv.getScore(util.tagTrim(datas.get(i).select("subtitle"), "subtitle")));
+					 searchDto.setTrprId(util.tagTrim(datas.get(i).select("trprid"), "trprid"));
+					
+					 titleIdMapper.put(util.tagTrim(datas.get(i).select("subtitle"), "subtitle"), searchDto);
+					 list.add(searchDto);
+				}
+				 count++;	
+			}//for
+			System.out.println("출력 과정수 : "+count);	
+		} // if(
 		model.addAttribute("key", key);
 		model.addAttribute("map", titleIdMapper);
-		//
 		model.addAttribute("list", list);	
 		return "home";
 	}
+	
+	
 	
 	@RequestMapping(value = "/info", method = RequestMethod.GET)
 	public String info(Locale locale, Model model, String subTitle) throws IOException {
@@ -133,14 +115,14 @@ public class HomeController {
 		 org.jsoup.nodes.Document docInfo=
 					Jsoup.connect("http://www.hrd.go.kr/jsp/HRDP/HRDPO00/HRDPOA40/HRDPOA40_2.jsp?authKey="+key+"&returnType=XML&outType=2&srchTrprId="+titleIdMapper.get(subTitle).getTrprId()+"&srchTrprDegr=1")
 					.timeout(80000).maxBodySize(10*1024*1024).get();
-		 
+
 		infoDto.setImg(titleIdMapper.get(subTitle).getImg());
-		infoDto.setAddr1(docInfo.select("addr1").toString());
-		infoDto.setAddr2(docInfo.select("addr2").toString());
-		infoDto.setHpaddr(docInfo.select("hpAddr").toString());
-		infoDto.setInonm(docInfo.select("inoNm").toString());
-		infoDto.setTrprchaptel(docInfo.select("trprChapTel").toString());
-		infoDto.setTrprnm(docInfo.select("trprNm").toString());
+		infoDto.setAddr1(util.tagTrim(docInfo.select("addr1"),"addr1"));
+		infoDto.setAddr2(util.tagTrim(docInfo.select("addr2"),"addr2"));
+		infoDto.setHpaddr(util.tagTrim(docInfo.select("hpaddr"),"hpaddr"));
+		infoDto.setInonm(util.tagTrim(docInfo.select("inonm"),"inonm"));
+		infoDto.setTrprchaptel(util.tagTrim(docInfo.select("trprchaptel"),"trprchaptel"));
+		infoDto.setTrprnm(util.tagTrim(docInfo.select("trprnm"),"trprnm"));
 		model.addAttribute("infoDto", infoDto);
 		
 		List<commentDto> commentList = new ArrayList<>();
@@ -153,11 +135,14 @@ public class HomeController {
 		
 		return "info";
 	}
-	//CommentDao
+
+	
+	
 	
 	@RequestMapping(value = "/addComment", method = RequestMethod.GET)
 	public String addComment(Locale locale, Model model,commentDto dto) throws IOException {
-		
+		//inonm
+		System.out.println("##########11" + dto.getAc_name());
 		String tmpAc_name = dto.getAc_name();
 		String ac_name = tmpAc_name.substring(tmpAc_name.indexOf("<inonm>")+8, tmpAc_name.indexOf("</inonm>")).trim();
 		dto.setAc_name(ac_name);
@@ -188,10 +173,10 @@ public class HomeController {
 	}
 	
 	
+	
 	@ResponseBody
 	@RequestMapping(value = "/getImg", method = RequestMethod.POST)
 	public Map<String, SearchDto> getImg(Locale locale, Model model,String[] acTitle) throws IOException {
-		List<String> imgList = new ArrayList<>();
 		Map<String,SearchDto> map = new HashMap<>();
 		 String text = "";
 
@@ -208,7 +193,7 @@ public class HomeController {
 			searchDto.setImg(docImg.select("filePath").toString().substring(10, 94).trim());
 			titleIdMapper.put(text, searchDto);
 		  }else{
-			  //searchDto.setImg("a");
+			searchDto.setImg("http://sign.kedui.net/rtimages/n_sub/no_detail_img.gif");
 		  }
 		map.put(text, searchDto);
 		 }
